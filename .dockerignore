@@ -1,0 +1,10 @@
+# Ignoruję środowisko wirtualne - kontener będzie miał własne pakiety
+venv/
+# Ignoruję pliki tymczasowe i cache Pythona
+__pycache__/
+*.pyc
+*.pyo
+# Ignoruję lokalną bazę SQLite (przechodzę na PostgreSQL)
+db.sqlite3
+# Ignoruję pliki systemowe
+.DS_Store

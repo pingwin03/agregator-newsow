@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:15
+    # Ustawiam początkowe dane logowania dla mojej bazy danych PostgreSQL
+    environment:
+      POSTGRES_DB: agregator_db
+      POSTGRES_USER: bg_user
+      POSTGRES_PASSWORD: secret_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_agregator
+    restart: always
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    # Uruchamiam mój deweloperski serwer Django, nasłuchujący na wszystkich interfejsach
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  celery:
+    build: .
+    # Upewnij się, że 'core' to nazwa folderu, w którym masz plik settings.py
+    command: celery -A core worker -l INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  celery-beat:
+    build: .
+    command: celery -A core beat -l INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
