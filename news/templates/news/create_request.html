@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Nowy wniosek</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f6f9; color: #333; }
+        .form-container { background: #fff; padding: 30px; border-radius: 8px; max-width: 600px; margin: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .errorlist { color: #dc3545; list-style: none; padding: 0; font-size: 13px; margin-top: 5px; }
+        button { background: #28a745; color: white; border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #218838; }
+        .back-link { display: inline-block; margin-top: 15px; color: #0056b3; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Nadeślij artykuł do publikacji</h2>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.errors %}
+                    <ul class="errorlist">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <button type="submit">Wyślij do akceptacji</button>
+    </form>
+    
+    <p><a href="{% url 'dashboard' %}" class="back-link">Powrót do pulpitu</a></p>
+</div>
+
+</body>
+</html>

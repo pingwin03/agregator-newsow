@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head><meta charset="UTF-8"><title>Rozpatrz wniosek</title></head>
+<body>
+    <h1>Wniosek: {{ pub_request.article.title }}</h1>
+    <p><strong>Treść:</strong><br>{{ pub_request.article.content }}</p>
+    <p><strong>Link:</strong> <a href="{{ pub_request.article.link }}" target="_blank">{{ pub_request.article.link }}</a></p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" name="action" value="approve">Zatwierdź</button>
+        <br><br>
+        <label>Powód odrzucenia (jeśli odrzucasz):<br>
+        <input type="text" name="rejection_reason"></label>
+        <button type="submit" name="action" value="reject">Odrzuć</button>
+    </form>
+    <br>
+    <p><a href="{% url 'dashboard' %}">Powrót do pulpitu</a></p>
+</body>
+</html>

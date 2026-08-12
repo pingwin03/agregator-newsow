@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregator Zagrożeń - CERT</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; color: #333; }
+        h1 { color: #222; }
+        .container { display: flex; gap: 20px; }
+        .main-content { flex: 3; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .sidebar { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: fit-content; }
+        .article { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; display: flex; gap: 15px; align-items: flex-start; }
+        .article-thumb { width: 120px; height: 80px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: #e9ecef; }
+        .article-content { flex-grow: 1; }
+        .article h3 a { color: #0056b3; text-decoration: none; }
+        .article h3 a:hover { text-decoration: underline; }
+        input, select, button { padding: 8px; margin-top: 5px; margin-bottom: 10px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #0056b3; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #004085; }
+        
+        /* Zmieniony wygląd filtra - układ flexbox */
+        .filter-box { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #e9ecef; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
+        .filter-box > div { flex: 1; min-width: 150px; }
+        .filter-box button { width: auto; padding: 8px 20px; margin-bottom: 10px; }
+        
+        .default-thumb {
+            display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; text-align: center; border-radius: 4px; flex-shrink: 0; width: 120px; height: 80px; padding: 5px; box-sizing: border-box;
+        }
+        .bg-cert { background-color: #0056b3; }
+        .bg-niebezpiecznik { background-color: #dc3545; }
+        .bg-other { background-color: #6c757d; }
+
+        .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .stat-card h3 { margin: 0; font-size: 24px; color: #0056b3; }
+        .stat-card p { margin: 5px 0 0; font-size: 13px; color: #6c757d; font-weight: bold; }
+        .stat-card.highlight { background: #fff3cd; border-color: #ffeeba; }
+        .stat-card.highlight h3 { color: #856404; }
+
+        /* Style dla wtyczki hasła na stronie głównej */
+        .password-wrapper { position: relative; display: block; margin-bottom: 15px; }
+        .password-wrapper input { margin-bottom: 0; padding-right: 40px; width: 100%; box-sizing: border-box; } 
+        .toggle-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 0; width: auto; font-size: 1.2rem; color: #555; }
+        .toggle-password:hover { background: none; }
+        
+        /* NOWE: Style dla paginacji */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+        .pagination a { padding: 8px 12px; background: #0056b3; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; transition: background 0.2s; }
+        .pagination a:hover { background: #004085; }
+        .pagination .current { font-weight: bold; color: #555; padding: 8px 12px; }
+    </style>
+</head>
+<body>
+
+    <h1>Agregator Zagrożeń Cyberbezpieczeństwa</h1>
+
+    <div class="container">
+        <!-- Lewa kolumna: Kafelki, Filtry i Artykuły -->
+        <div class="main-content">
+            
+            <!-- Kafelki statystyczne -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>{{ total_articles }}</h3>
+                    <p>Wszystkie alerty</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ today_articles }}</h3>
+                    <p>Nowe (ostatnie 24h)</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ active_sources_count }}</h3>
+                    <p>Aktywne źródła</p>
+                </div>
+                {% if request.user.is_authenticated and request.user.role in 'admin,officer' %}
+                <div class="stat-card highlight">
+                    <h3>{{ pending_requests_count }}</h3>
+                    <p>Do moderacji</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <h2>Ostatnie alerty</h2>
+            
+            <!-- Zaktualizowany Formularz filtrowania -->
+            <form method="GET" action="" class="filter-box">
+                <div>
+                    <label><strong>Szukaj w tytule:</strong></label>
+                    <input type="text" name="search" value="{{ request.GET.search|default:'' }}" placeholder="Wpisz szukane słowo...">
+                </div>
+                <div>
+                    <label><strong>Filtruj źródło:</strong></label>
+                    <select name="source">
+                        <option value="">-- Wszystkie źródła --</option>
+                        {% for src in sources %}
+                            <option value="{{ src }}" {% if request.GET.source == src %}selected{% endif %}>{{ src }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <!-- Nowe pole: Ilość wyników na stronę -->
+                    <label><strong>Wyników na stronę:</strong></label>
+                    <select name="per_page">
+                        <option value="10" {% if request.GET.per_page == '10' %}selected{% endif %}>10</option>
+                        <option value="20" {% if request.GET.per_page == '20' or not request.GET.per_page %}selected{% endif %}>20</option>
+                        <option value="30" {% if request.GET.per_page == '30' %}selected{% endif %}>30</option>
+                        <option value="40" {% if request.GET.per_page == '40' %}selected{% endif %}>40</option>
+                    </select>
+                </div>
+                <button type="submit">Filtruj</button>
+            </form>
+
+            <!-- Lista artykułów -->
+            {% if articles %}
+                {% for article in articles %}
+                    <div class="article">
+                        {% if article.image_url %}
+                            <img src="{{ article.image_url }}" alt="Miniatura" class="article-thumb">
+                        {% else %}
+                            <!-- Domyślny kafelek zastępczy w zależności od źródła -->
+                            {% if article.source == 'CERT' %}
+                                <div class="article-thumb default-thumb bg-cert">CERT Polska</div>
+                            {% elif article.source == 'Niebezpiecznik' %}
+                                <div class="article-thumb default-thumb bg-niebezpiecznik">Niebezpiecznik</div>
+                            {% else %}
+                                <div class="article-thumb default-thumb bg-other">{{ article.source }}</div>
+                            {% endif %}
+                        {% endif %}
+
+                        <div class="article-content">
+                            <h3><a href="{{ article.link }}" target="_blank">{{ article.title }}</a></h3>
+                            <p>{{ article.summary }}</p>
+                            <small>Źródło: <strong>{{ article.source }}</strong> | Data: {{ article.published_at }}</small>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- NOWE: Mechanizm nawigacji między stronami -->
+                {% if articles.has_other_pages %}
+                <div class="pagination">
+                    {% if articles.has_previous %}
+                        <!-- Zachowuję aktywne filtry w linkach strzałek -->
+                        <a href="?page={{ articles.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.source %}&source={{ request.GET.source }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">&laquo; Poprzednia</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Strona {{ articles.number }} z {{ articles.paginator.num_pages }}
+                    </span>
+
+                    {% if articles.has_next %}
+                        <a href="?page={{ articles.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.source %}&source={{ request.GET.source }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">Następna &raquo;</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            {% else %}
+                <p>Brak artykułów spełniających kryteria.</p>
+            {% endif %}
+        </div>
+
+        <!-- Prawa kolumna: Panel użytkownika / Logowanie -->
+        <div class="sidebar">
+            {% if request.user.is_authenticated %}
+                <h3>Witaj, {{ request.user.email }}!</h3>
+                <p>Rola: <strong>{{ request.user.get_role_display }}</strong></p>
+                <a href="{% url 'dashboard' %}"><button style="background: #28a745; margin-bottom: 10px;">Mój Pulpit / Zgłoszenia</button></a>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" style="background: #dc3545;">Wyloguj się</button>
+                </form>
+            {% else %}
+                <h3>Logowanie do systemu</h3>
+                <form method="POST" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <label>Adres E-mail:</label>
+                    <input type="text" name="username" required placeholder="np. jan.kowalski@nwosg.pl">
+                    <label>Hasło:</label>
+                    <input type="password" name="password" required>
+                    <button type="submit">Zaloguj</button>
+                </form>
+                
+                <!-- Przycisk do rejestracji nowego pracownika -->
+                <div style="text-align: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+                    <p style="margin-bottom: 10px; font-size: 14px;">Nie masz konta pracowniczego?</p>
+                    <a href="{% url 'register' %}">
+                        <button type="button" style="background: #6c757d;">Zarejestruj się</button>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const passwordInputs = document.querySelectorAll('input[type="password"]');
+            
+            passwordInputs.forEach(function(passwordInput) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'password-wrapper';
+                
+                passwordInput.parentNode.insertBefore(wrapper, passwordInput);
+                wrapper.appendChild(passwordInput);
+                
+                const toggleBtn = document.createElement('button');
+                toggleBtn.type = 'button';
+                toggleBtn.className = 'toggle-password';
+                toggleBtn.innerHTML = '👁️';
+                toggleBtn.title = 'Pokaż hasło';
+                
+                wrapper.appendChild(toggleBtn);
+                
+                toggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); 
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        toggleBtn.innerHTML = '🙈';
+                        toggleBtn.title = 'Ukryj hasło';
+                    } else {
+                        passwordInput.type = 'password';
+                        toggleBtn.innerHTML = '👁️';
+                        toggleBtn.title = 'Pokaż hasło';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Rejestracja - Agregator Zagrożeń</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f6f9; margin: 0; padding: 20px; box-sizing: border-box; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 320px; }
+        input { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        .helptext, .errorlist { font-size: 0.85rem; color: #666; margin-top: -10px; margin-bottom: 10px; display: block; }
+        .errorlist { color: #dc3545; padding-left: 0; list-style: none; }
+        
+        .submit-btn { width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .submit-btn:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>Utwórz konto pracownicze</h2>
+        <p style="font-size: 0.9rem; color: #555;">Hasło startowe zostanie wygenerowane automatycznie i wysłane na podany adres e-mail.</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="submit-btn">Zarejestruj się</button>
+        </form>
+        <p style="text-align: center; margin-top: 15px;">
+            Masz już konto? <a href="{% url 'login' %}">Zaloguj się</a><br><br>
+            <a href="{% url 'home' %}">&larr; Powrót na stronę główną</a>
+        </p>
+    </div>
+</body>
+</html>

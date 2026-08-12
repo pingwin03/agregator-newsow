@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Pracownika - Agregator Zagrożeń</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #222; }
+        .request-item { background: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
+        .status-pending { color: #d39e00; font-weight: bold; }
+        .status-approved { color: #28a745; font-weight: bold; }
+        .status-rejected { color: #dc3545; font-weight: bold; }
+        .btn { display: inline-block; padding: 10px 15px; background: #0056b3; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 15px; }
+        .btn:hover { background: #004085; }
+        .btn-secondary { background: #6c757d; margin-right: 10px; }
+        .btn-secondary:hover { background: #5a6268; }
+        .top-nav { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-nav">
+            <a href="{% url 'home' %}" class="btn btn-secondary">&larr; Strona Główna (Alerty)</a>
+        </div>
+
+        <h1>Mój pulpit zgłoszeń</h1>
+        <p>Zalogowany jako: <strong>{{ request.user.username }}</strong> (Rola: Pracownik)</p>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        <h2>Twoje nadesłane wnioski</h2>
+        
+        {% if my_requests %}
+            <div>
+                {% for req in my_requests %}
+                    <div class="request-item">
+                        <h3 style="margin-top: 0; margin-bottom: 5px;">{{ req.article.title }}</h3>
+                        <p style="margin: 5px 0; color: #555;">{{ req.article.summary|truncatechars:150 }}</p>
+                        <p style="margin: 5px 0;">
+                            Status: 
+                            <span class="status-{{ req.status }}">
+                                {{ req.get_status_display }}
+                            </span>
+                        </p>
+                        {% if req.status == 'rejected' %}
+                            <p style="margin: 5px 0; color: #dc3545;"><small><strong>Powód odrzucenia:</strong> {{ req.rejection_reason }}</small></p>
+                        {% endif %}
+                        <small style="color: #888;">Data nadesłania: {{ req.created_at }}</small>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Nie nadesłałeś jeszcze żadnych wniosków.</p>
+        {% endif %}
+
+        <a href="{% url 'create_request' %}" class="btn">+ Nadeślij nowy artykuł</a>
+    </div>
+</body>
+</html>

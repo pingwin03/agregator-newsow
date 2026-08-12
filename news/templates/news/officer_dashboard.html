@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Oficera / Admina</title>
+</head>
+<body>
+    <h1>Panel zarządzania wnioskami o publikację</h1>
+    <p>Zalogowany jako: <strong>{{ request.user.username }}</strong> (Rola: {{ request.user.role }})</p>
+    
+    <hr>
+    
+    <div style="margin-bottom: 20px;">
+        <!-- Mój przycisk do szybkiego pobierania raportu dziennego w formacie CSV -->
+        <a href="/api/reports/export_csv/" style="background-color: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+            ⬇️ Pobierz raport CSV (24h)
+        </a>
+    </div>
+    
+    <h2>Oczekujące wnioski</h2>
+    {% if requests_list %}
+        <ul>
+            {% for req in requests_list %}
+                <li>
+                    <strong>{{ req.article.title }}</strong> 
+                    (Źródło: {{ req.article.source }}) - 
+                    <a href="{% url 'review_request' req.pk %}">Rozpatrz wniosek</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Brak oczekujących wniosków do zatwierdzenia.</p>
+    {% endif %}
+
+    <p><a href="{% url 'create_request' %}">Nadeślij nowy artykuł</a></p>
+</body>
+</html>
