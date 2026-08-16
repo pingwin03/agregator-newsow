@@ -18,24 +18,34 @@ def api_client():
 
 @pytest.fixture
 def employee_user(db):
-    """Tworzę i zwracam testowego użytkownika o roli pracownika."""
-    return User.objects.create_user(username='pracownik_test', password='testpassword123', role='employee')
+    """Tworzę i zwracam testowego użytkownika o roli pracownika z poprawnym mailem i hasłem."""
+    return User.objects.create_user(
+        username='pracownik_test',
+        email='pracownik@test.pl',
+        password='testpassword123',
+        role='employee'
+    )
 
 @pytest.fixture
 def admin_user(db):
     """Tworzę i zwracam testowego administratora."""
-    return User.objects.create_user(username='admin_test', password='testpassword123', role='admin')
+    return User.objects.create_user(
+        username='admin_test',
+        email='admin@test.pl',
+        password='testpassword123',
+        role='admin'
+    )
 
 @pytest.fixture
 def test_article(db):
-    """Tworzę testowy artykuł w bazie danych (dodałem wymagane pole published_at)."""
+    """Tworzę testowy artykuł w bazie danych (z wymaganym polem published_at)."""
     return Article.objects.create(
         title='Zagrożenie testowe na co najmniej 10 znaków',
         summary='To jest bardzo długie podsumowanie testowe, które ma więcej niż 20 znaków.',
         link='https://niebezpiecznik.pl/test',
         source='CERT Polska',
         is_active=True,
-        published_at=timezone.now()  # Rozwiązanie błędu IntegrityError
+        published_at=timezone.now()
     )
 
 @pytest.fixture
@@ -66,12 +76,13 @@ def test_api_requests_unauthorized(api_client):
 def test_api_jwt_token_generation(api_client, employee_user):
     """Weryfikuję, czy API poprawnie generuje tokeny JWT po podaniu danych."""
     response = api_client.post('/api/token/', {
-        'username': 'pracownik_test',
+        'email': 'pracownik@test.pl',  # Zamiast 'username' podajemy adres email użytkownika
         'password': 'testpassword123'
     })
     assert response.status_code == status.HTTP_200_OK
     assert 'access' in response.data
     assert 'refresh' in response.data
+   
 
 @pytest.mark.django_db
 def test_api_requests_authorized_employee(api_client, employee_user):
@@ -86,10 +97,9 @@ def test_api_requests_authorized_employee(api_client, employee_user):
 @patch('news.tasks.fetch_new_articles')
 def test_celery_fetch_new_articles_task(mock_fetch):
     """
-    Testuję zadanie Celery za pomocą wbudowanego mockowania z unittest (rozwiązanie błędu fixture 'mocker' not found).
+    Testuję zadanie Celery za pomocą wbudowanego mockowania z unittest.
     Upewniam się, że logika pobierania wywołuje się bez błędów.
     """
-    # Symulujemy pomyślne wykonanie zadania
     mock_fetch.return_value = True
     
     try:
