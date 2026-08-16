@@ -124,8 +124,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'pl'              # Zmiana języka na polski dla całego panelu i komunikatów
+TIME_ZONE = 'Europe/Warsaw'       # Polska strefa czasowa
 USE_I18N = True
 USE_TZ = True
 
@@ -170,6 +170,6 @@ SESSION_COOKIE_SECURE = False
 
 
 # EMAIL CONFIGURATION
-# Na potrzeby deweloperskie wymuszam wypisywanie emaili bezpośrednio w terminalu (konsoli)
+# Na potrzeby deweloperskie wymuszam wypisywanie emaili bezpośrednio w konsoli
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'agregator@sg.gov.pl'
